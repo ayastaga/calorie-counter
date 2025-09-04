@@ -96,18 +96,24 @@ export default function ImageUploadAnalysisCard() {
         });
       } catch (error) {
         setIsUploading(false);
+        console.error("Upload error details:", error);
+        
         if (error instanceof UploadThingError) {
+          console.error("UploadThing error code:", error.code);
+          console.error("UploadThing error data:", error.data);
           const errorMessage =
             error.data && "error" in error.data
               ? error.data.error
-              : "Upload failed";
+              : `Upload failed: ${error.message || error.code}`;
           setError(errorMessage);
           toast.error(errorMessage);
           return;
         }
+        
         const message = error instanceof Error ? error.message : "An unknown error occurred";
-        setError(message);
-        toast.error(message);
+        console.error("General upload error:", message);
+        setError(`Upload failed: ${message}`);
+        toast.error(`Upload failed: ${message}`);
       } finally {
         setIsUploading(false);
       }
@@ -201,6 +207,15 @@ export default function ImageUploadAnalysisCard() {
       setAnalysisResult(result);
       setUploadedFiles([]);
       setFiles([]);
+      
+      // Debug info in browser console
+      if (result.debug) {
+        console.log('=== NUTRITION DEBUG INFO ===');
+        console.log('Dishes processed:', result.debug.dishesProcessed);
+        console.log('Dishes with nutrition:', result.debug.dishesWithNutrition);
+        console.log('Nutritionix queries:', result.debug.nutritionixQueries);
+        console.log('=== END DEBUG ===');
+      }
       
       toast.success("Analysis complete!", {
         description: "Your images have been analyzed and cleaned up.",
@@ -583,4 +598,4 @@ export default function ImageUploadAnalysisCard() {
       </CardContent>
     </Card>
   );
-} 
+}
