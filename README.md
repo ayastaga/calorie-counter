@@ -30,29 +30,24 @@ This project is a modern calorie-counter web app, designed to help users log mea
 
 ## Features
 
-- **Add and Track Meals**: Easily input meals or food items with their calorie counts.  
-- **Daily Totals**: Track total calories consumed per day.  
-- **Nutrition Awareness**: Users can get a quick glance at their daily caloric intake.  
-- **User-Friendly UI**: Responsive and clean design for smooth experience on desktop and mobile.
+- **Upload your image**: Upload any image of any dish you'd like  
+- **Count your calories**: Using GEMINI vision, track the total number of calories consumed per day.  
+- **Find ways to burn off those calories**: Based on the number of calories, get exercises recommended!  
 
 ---
 
 ## Tech Stack
 
-- **Frontend**: Built with modern web technologies (e.g., React, Vue, or plain TypeScript/JavaScript depending on your implementation).  
-- **Styling**: CSS frameworks or modules—Tailwind CSS, CSS Modules, or pure CSS for clean layout and responsive design.  
-- **Backend / API**: Optional API or serverless functions (e.g., via Vercel) for persisting data.  
-- **Deployment Platform**: Hosted on Vercel, enabling seamless global deployment and continuous integration.
+- **Frontend**: Built using Nextjs with Typescript + ShadCN for the sleek ui design  
+- **Backend / API**: Gemini Vision for image detection, Uploadthing for file storage, Redis for key-value caching, Nutritionix for calories API
+- **Deployment**: Hosted for pre-production on Vercel
 
 ---
 
-## Architecture & Workflow
-
-1. User **enters meals and calorie amounts** via an intuitive interface.  
-2. Data is **stored locally** (using browser storage) or **persisted via an API** (if available).  
-3. The app **calculates daily calorie totals** dynamically.  
-4. Users view their **daily summary and history** anytime.  
-5. Deployed live on Vercel for fast access and continuous updates.
+## Future Plans
+- integrate user sign in & account creation
+- allow users to track their history and daily caloric intake with statistics
+  - this might mean using supabase or Postgresql for storing user information
 
 ---
 
