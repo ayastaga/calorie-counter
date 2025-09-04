@@ -1,0 +1,1 @@
+- replace all the graphics within this folder with the ones specified by the company
