@@ -1,7 +1,7 @@
 // /src/lib/uploadthing.ts
 import {
   generateReactHelpers,
-} from "@uploadthing/react/hooks";
+} from "@uploadthing/react";
 
 import type { OurFileRouter } from "../app/api/uploadthing/core";
 
