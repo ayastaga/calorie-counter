@@ -9,6 +9,3 @@ export const { GET, POST } = createRouteHandler({
     logLevel: "Debug",
   },
 });
-
-// Make sure both GET and POST are exported
-export { GET, POST };
