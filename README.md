@@ -1,5 +1,7 @@
 # Calorie Counter
 
+[![File Uploader](./public/images/app-preview.png)](https://uploader.sadmn.com)
+
 A sleek web application that allows users to track their daily calorie intake and gain insights into their nutrition through a clean, intuitive interface.
 
 Live Demo: [https://calorie-counter-ashen.vercel.app/](https://calorie-counter-ashen.vercel.app/)
