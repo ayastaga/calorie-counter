@@ -10,7 +10,13 @@ import { auth0 } from "@/lib/auth0";
 const CustomComponent = async () => {
     const session = await auth0.getSession();
     if (!session) {
-      return (<Link className="hover:bg-black hover:text-white px-2 py-1 rounded-md" href="/auth/login">Login</Link>);
+      return (
+      <div>
+        <Link className="hover:bg-black hover:text-white px-2 py-1 rounded-md" href="/about">About us</Link>
+        <Link className="hover:bg-black hover:text-white px-2 py-1 rounded-md" href="/pricing">Pricing</Link>
+        <Link className="hover:bg-black hover:text-white px-2 py-1 rounded-md" href="/auth/login?returnTo=/dashboard">Login</Link>
+      </div>)
+    ;
     } else {
       return (
         <div className="flex justify-end">
