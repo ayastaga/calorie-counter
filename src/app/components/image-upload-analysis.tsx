@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -18,7 +24,15 @@ import {
 } from "@/components/ui/file-upload";
 import { uploadFiles } from "@/lib/uploadthing";
 import type { UploadedFile } from "@/types";
-import { Loader2, X, Eye, Upload, Trash2, Utensils, Activity } from "lucide-react";
+import {
+  Loader2,
+  X,
+  Eye,
+  Upload,
+  Trash2,
+  Utensils,
+  Activity,
+} from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Image from "next/image";
 import { toast } from "sonner";
@@ -68,7 +82,9 @@ export default function ImageUploadAnalysisCard() {
   const [files, setFiles] = useState<File[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(
+    null
+  );
   const [error, setError] = useState<string | null>(null);
   const [deletingFiles, setDeletingFiles] = useState<Set<string>>(new Set());
 
@@ -79,7 +95,7 @@ export default function ImageUploadAnalysisCard() {
         onProgress,
       }: {
         onProgress: (file: File, progress: number) => void;
-      },
+      }
     ) => {
       try {
         setIsUploading(true);
@@ -97,7 +113,7 @@ export default function ImageUploadAnalysisCard() {
       } catch (error) {
         setIsUploading(false);
         console.error("Upload error details:", error);
-        
+
         if (error instanceof UploadThingError) {
           console.error("UploadThing error code:", error.code);
           console.error("UploadThing error data:", error.data);
@@ -109,8 +125,9 @@ export default function ImageUploadAnalysisCard() {
           toast.error(errorMessage);
           return;
         }
-        
-        const message = error instanceof Error ? error.message : "An unknown error occurred";
+
+        const message =
+          error instanceof Error ? error.message : "An unknown error occurred";
         console.error("General upload error:", message);
         setError(`Upload failed: ${message}`);
         toast.error(`Upload failed: ${message}`);
@@ -118,7 +135,7 @@ export default function ImageUploadAnalysisCard() {
         setIsUploading(false);
       }
     },
-    [],
+    []
   );
 
   const onFileReject = useCallback((file: File, message: string) => {
@@ -130,11 +147,13 @@ export default function ImageUploadAnalysisCard() {
   }, []);
 
   const handleFileDelete = async (file: File, index: number) => {
-    const uploadedFile = uploadedFiles.find(uf => uf.name === file.name && uf.size === file.size);
-    
+    const uploadedFile = uploadedFiles.find(
+      (uf) => uf.name === file.name && uf.size === file.size
+    );
+
     if (uploadedFile) {
-      setDeletingFiles(prev => new Set([...prev, uploadedFile.key]));
-      
+      setDeletingFiles((prev) => new Set([...prev, uploadedFile.key]));
+
       try {
         const response = await fetch("/api/delete-file", {
           method: "POST",
@@ -148,26 +167,29 @@ export default function ImageUploadAnalysisCard() {
           throw new Error("Failed to delete file from server");
         }
 
-        setUploadedFiles(prev => prev.filter(uf => uf.key !== uploadedFile.key));
-        setFiles(prev => prev.filter((_, i) => i !== index));
-        
+        setUploadedFiles((prev) =>
+          prev.filter((uf) => uf.key !== uploadedFile.key)
+        );
+        setFiles((prev) => prev.filter((_, i) => i !== index));
+
         toast.success("File deleted successfully", {
           description: `"${file.name}" has been removed from server and queue`,
         });
       } catch (error) {
         console.error("Error deleting file:", error);
-        const message = error instanceof Error ? error.message : "Failed to delete file";
+        const message =
+          error instanceof Error ? error.message : "Failed to delete file";
         setError(message);
         toast.error(message);
       } finally {
-        setDeletingFiles(prev => {
+        setDeletingFiles((prev) => {
           const newSet = new Set(prev);
           newSet.delete(uploadedFile.key);
           return newSet;
         });
       }
     } else {
-      setFiles(prev => prev.filter((_, i) => i !== index));
+      setFiles((prev) => prev.filter((_, i) => i !== index));
       toast.success("File removed from queue");
     }
   };
@@ -190,11 +212,11 @@ export default function ImageUploadAnalysisCard() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          images: uploadedFiles.map(file => ({
+          images: uploadedFiles.map((file) => ({
             url: file.url,
             key: file.key,
-            name: file.name
-          }))
+            name: file.name,
+          })),
         }),
       });
 
@@ -207,23 +229,23 @@ export default function ImageUploadAnalysisCard() {
       setAnalysisResult(result);
       setUploadedFiles([]);
       setFiles([]);
-      
+
       // Debug info in browser console
       if (result.debug) {
-        console.log('=== NUTRITION DEBUG INFO ===');
-        console.log('Dishes processed:', result.debug.dishesProcessed);
-        console.log('Dishes with nutrition:', result.debug.dishesWithNutrition);
-        console.log('Nutritionix queries:', result.debug.nutritionixQueries);
-        console.log('=== END DEBUG ===');
+        console.log("=== NUTRITION DEBUG INFO ===");
+        console.log("Dishes processed:", result.debug.dishesProcessed);
+        console.log("Dishes with nutrition:", result.debug.dishesWithNutrition);
+        console.log("Nutritionix queries:", result.debug.nutritionixQueries);
+        console.log("=== END DEBUG ===");
       }
-      
+
       toast.success("Analysis complete!", {
         description: "Your images have been analyzed and cleaned up.",
       });
-      
     } catch (error) {
       console.error("Analysis error:", error);
-      const message = error instanceof Error ? error.message : "Analysis failed";
+      const message =
+        error instanceof Error ? error.message : "Analysis failed";
       setError(message);
       toast.error(message);
     } finally {
@@ -248,7 +270,8 @@ export default function ImageUploadAnalysisCard() {
           Food Analysis & Nutrition
         </CardTitle>
         <CardDescription>
-          Upload food images to get detailed nutritional information, calorie counts, and ingredient analysis powered by AI
+          Upload food images to get detailed nutritional information, calorie
+          counts, and ingredient analysis powered by AI
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -267,7 +290,9 @@ export default function ImageUploadAnalysisCard() {
               <div className="flex items-center justify-center rounded-full border p-2.5">
                 <Upload className="size-6 text-muted-foreground" />
               </div>
-              <p className="font-medium text-sm">Drag & drop food images here</p>
+              <p className="font-medium text-sm">
+                Drag & drop food images here
+              </p>
               <p className="text-muted-foreground text-xs">
                 Or click to browse (max 5 files, up to 4MB each)
               </p>
@@ -278,11 +303,15 @@ export default function ImageUploadAnalysisCard() {
               </Button>
             </FileUploadTrigger>
           </FileUploadDropzone>
-          
+
           <FileUploadList>
             {files.map((file, index) => {
-              const uploadedFile = uploadedFiles.find(uf => uf.name === file.name && uf.size === file.size);
-              const isDeleting = uploadedFile ? deletingFiles.has(uploadedFile.key) : false;
+              const uploadedFile = uploadedFiles.find(
+                (uf) => uf.name === file.name && uf.size === file.size
+              );
+              const isDeleting = uploadedFile
+                ? deletingFiles.has(uploadedFile.key)
+                : false;
 
               return (
                 <FileUploadItem key={index} value={file}>
@@ -290,10 +319,10 @@ export default function ImageUploadAnalysisCard() {
                     <FileUploadItemPreview />
                     <FileUploadItemMetadata />
                     <FileUploadItemDelete asChild>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="size-7" 
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-7"
                         onClick={() => handleFileDelete(file, index)}
                         disabled={isUploading || isAnalyzing || isDeleting}
                       >
@@ -320,7 +349,9 @@ export default function ImageUploadAnalysisCard() {
 
         {uploadedFiles.length > 0 && (
           <div className="flex flex-col gap-4">
-            <p className="font-medium text-sm">Uploaded files ready for analysis</p>
+            <p className="font-medium text-sm">
+              Uploaded files ready for analysis
+            </p>
             <div className="flex items-center gap-2 overflow-x-auto">
               {uploadedFiles.map((file) => (
                 <div key={file.key} className="relative group">
@@ -338,7 +369,9 @@ export default function ImageUploadAnalysisCard() {
                       </div>
                     )}
                     <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-black/75 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                      {file.name.length > 15 ? `${file.name.slice(0, 15)}...` : file.name}
+                      {file.name.length > 15
+                        ? `${file.name.slice(0, 15)}...`
+                        : file.name}
                     </div>
                   </div>
                 </div>
@@ -348,8 +381,8 @@ export default function ImageUploadAnalysisCard() {
         )}
 
         {uploadedFiles.length > 0 && (
-          <Button 
-            onClick={analyzeImages} 
+          <Button
+            onClick={analyzeImages}
             disabled={isAnalyzing || isUploading || deletingFiles.size > 0}
             className="w-full"
             size="lg"
@@ -375,9 +408,9 @@ export default function ImageUploadAnalysisCard() {
                 <Utensils className="h-5 w-5" />
                 Analysis Results
               </h3>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={clearResults}
                 className="text-muted-foreground hover:text-foreground"
               >
@@ -389,7 +422,9 @@ export default function ImageUploadAnalysisCard() {
             {analysisResult.totalNutrition && (
               <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-lg text-green-800">Total Nutritional Information</CardTitle>
+                  <CardTitle className="text-lg text-green-800">
+                    Total Nutritional Information
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -401,13 +436,17 @@ export default function ImageUploadAnalysisCard() {
                     </div>
                     <div className="text-center">
                       <div className="text-xl font-semibold text-blue-700">
-                        {formatNutrientValue(analysisResult.totalNutrition.protein)}
+                        {formatNutrientValue(
+                          analysisResult.totalNutrition.protein
+                        )}
                       </div>
                       <div className="text-sm text-blue-600">Protein</div>
                     </div>
                     <div className="text-center">
                       <div className="text-xl font-semibold text-orange-700">
-                        {formatNutrientValue(analysisResult.totalNutrition.carbs)}
+                        {formatNutrientValue(
+                          analysisResult.totalNutrition.carbs
+                        )}
                       </div>
                       <div className="text-sm text-orange-600">Carbs</div>
                     </div>
@@ -419,13 +458,18 @@ export default function ImageUploadAnalysisCard() {
                     </div>
                     <div className="text-center">
                       <div className="text-xl font-semibold text-purple-700">
-                        {formatNutrientValue(analysisResult.totalNutrition.fiber)}
+                        {formatNutrientValue(
+                          analysisResult.totalNutrition.fiber
+                        )}
                       </div>
                       <div className="text-sm text-purple-600">Fiber</div>
                     </div>
                     <div className="text-center">
                       <div className="text-xl font-semibold text-red-700">
-                        {formatNutrientValue(analysisResult.totalNutrition.sodium, "mg")}
+                        {formatNutrientValue(
+                          analysisResult.totalNutrition.sodium,
+                          "mg"
+                        )}
                       </div>
                       <div className="text-sm text-red-600">Sodium</div>
                     </div>
@@ -440,7 +484,9 @@ export default function ImageUploadAnalysisCard() {
                 <CardTitle className="text-lg">Image Description</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">{analysisResult.description}</p>
+                <p className="text-muted-foreground">
+                  {analysisResult.description}
+                </p>
                 <div className="mt-2 text-sm text-muted-foreground">
                   Confidence: {Math.round(analysisResult.confidence * 100)}%
                 </div>
@@ -455,7 +501,9 @@ export default function ImageUploadAnalysisCard() {
                   <Card key={index} className="border-l-4 border-l-blue-500">
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base capitalize">{dish.name}</CardTitle>
+                        <CardTitle className="text-base capitalize">
+                          {dish.name}
+                        </CardTitle>
                         <Badge variant="outline">{dish.servingSize}</Badge>
                       </div>
                     </CardHeader>
@@ -467,63 +515,101 @@ export default function ImageUploadAnalysisCard() {
                               <div className="text-lg font-semibold text-green-700">
                                 {Math.round(dish.nutrition.nf_calories)}
                               </div>
-                              <div className="text-xs text-green-600">Calories</div>
+                              <div className="text-xs text-green-600">
+                                Calories
+                              </div>
                             </div>
                             <div className="bg-blue-50 p-3 rounded-lg text-center">
                               <div className="text-sm font-semibold text-blue-700">
                                 {formatNutrientValue(dish.nutrition.nf_protein)}
                               </div>
-                              <div className="text-xs text-blue-600">Protein</div>
+                              <div className="text-xs text-blue-600">
+                                Protein
+                              </div>
                             </div>
                             <div className="bg-orange-50 p-3 rounded-lg text-center">
                               <div className="text-sm font-semibold text-orange-700">
-                                {formatNutrientValue(dish.nutrition.nf_total_carbohydrate)}
+                                {formatNutrientValue(
+                                  dish.nutrition.nf_total_carbohydrate
+                                )}
                               </div>
-                              <div className="text-xs text-orange-600">Carbs</div>
+                              <div className="text-xs text-orange-600">
+                                Carbs
+                              </div>
                             </div>
                             <div className="bg-yellow-50 p-3 rounded-lg text-center">
                               <div className="text-sm font-semibold text-yellow-700">
-                                {formatNutrientValue(dish.nutrition.nf_total_fat)}
+                                {formatNutrientValue(
+                                  dish.nutrition.nf_total_fat
+                                )}
                               </div>
                               <div className="text-xs text-yellow-600">Fat</div>
                             </div>
                           </div>
-                          
+
                           <Separator />
-                          
+
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
                             <div>
-                              <span className="text-muted-foreground">Fiber:</span>
-                              <span className="ml-1 font-medium">{formatNutrientValue(dish.nutrition.nf_dietary_fiber)}</span>
+                              <span className="text-muted-foreground">
+                                Fiber:
+                              </span>
+                              <span className="ml-1 font-medium">
+                                {formatNutrientValue(
+                                  dish.nutrition.nf_dietary_fiber
+                                )}
+                              </span>
                             </div>
                             <div>
-                              <span className="text-muted-foreground">Sugar:</span>
-                              <span className="ml-1 font-medium">{formatNutrientValue(dish.nutrition.nf_sugars)}</span>
+                              <span className="text-muted-foreground">
+                                Sugar:
+                              </span>
+                              <span className="ml-1 font-medium">
+                                {formatNutrientValue(dish.nutrition.nf_sugars)}
+                              </span>
                             </div>
                             <div>
-                              <span className="text-muted-foreground">Sodium:</span>
-                              <span className="ml-1 font-medium">{formatNutrientValue(dish.nutrition.nf_sodium, "mg")}</span>
+                              <span className="text-muted-foreground">
+                                Sodium:
+                              </span>
+                              <span className="ml-1 font-medium">
+                                {formatNutrientValue(
+                                  dish.nutrition.nf_sodium,
+                                  "mg"
+                                )}
+                              </span>
                             </div>
                             <div>
-                              <span className="text-muted-foreground">Cholesterol:</span>
-                              <span className="ml-1 font-medium">{formatNutrientValue(dish.nutrition.nf_cholesterol, "mg")}</span>
+                              <span className="text-muted-foreground">
+                                Cholesterol:
+                              </span>
+                              <span className="ml-1 font-medium">
+                                {formatNutrientValue(
+                                  dish.nutrition.nf_cholesterol,
+                                  "mg"
+                                )}
+                              </span>
                             </div>
                           </div>
-                          
+
                           <div className="text-xs text-muted-foreground">
-                            Serving: {dish.nutrition.serving_qty} {dish.nutrition.serving_unit} 
-                            ({dish.nutrition.serving_weight_grams}g)
+                            Serving: {dish.nutrition.serving_qty}{" "}
+                            {dish.nutrition.serving_unit}(
+                            {dish.nutrition.serving_weight_grams}g)
                           </div>
                         </div>
                       ) : (
                         <div className="space-y-2">
                           <Alert className="border-amber-200 bg-amber-50">
                             <AlertDescription className="text-amber-800">
-                              {dish.error || "Nutrition data not available for this dish"}
+                              {dish.error ||
+                                "Nutrition data not available for this dish"}
                             </AlertDescription>
                           </Alert>
                           <div className="text-xs text-muted-foreground">
-                            Try searching for "{dish.name}" manually in nutrition apps like MyFitnessPal for detailed information.
+                            Try searching for "{dish.name}" manually in
+                            nutrition apps like MyFitnessPal for detailed
+                            information.
                           </div>
                         </div>
                       )}
@@ -537,12 +623,18 @@ export default function ImageUploadAnalysisCard() {
             {analysisResult.objects && analysisResult.objects.length > 0 && (
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">Ingredients Identified</CardTitle>
+                  <CardTitle className="text-lg">
+                    Ingredients Identified
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
                     {analysisResult.objects.map((object, index) => (
-                      <Badge key={index} variant="secondary" className="text-xs">
+                      <Badge
+                        key={index}
+                        variant="secondary"
+                        className="text-xs"
+                      >
                         {object}
                       </Badge>
                     ))}
@@ -552,47 +644,62 @@ export default function ImageUploadAnalysisCard() {
             )}
 
             {/* Activity Suggestions */}
-            {analysisResult.totalNutrition && analysisResult.totalNutrition.calories > 0 && (
-              <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg text-purple-800 flex items-center gap-2">
-                    <Activity className="h-5 w-5" />
-                    Activity Suggestions to Burn Calories
-                  </CardTitle>
-                  <CardDescription className="text-purple-600">
-                    Approximate time needed to burn {Math.round(analysisResult.totalNutrition.calories)} calories
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center p-3 bg-white rounded-lg">
-                      <div className="text-lg font-semibold text-purple-700">
-                        {Math.round(analysisResult.totalNutrition.calories / 10)} min
+            {analysisResult.totalNutrition &&
+              analysisResult.totalNutrition.calories > 0 && (
+                <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg text-purple-800 flex items-center gap-2">
+                      <Activity className="h-5 w-5" />
+                      Activity Suggestions to Burn Calories
+                    </CardTitle>
+                    <CardDescription className="text-purple-600">
+                      Approximate time needed to burn{" "}
+                      {Math.round(analysisResult.totalNutrition.calories)}{" "}
+                      calories
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="text-center p-3 bg-white rounded-lg">
+                        <div className="text-lg font-semibold text-purple-700">
+                          {Math.round(
+                            analysisResult.totalNutrition.calories / 10
+                          )}{" "}
+                          min
+                        </div>
+                        <div className="text-sm text-purple-600">Running</div>
                       </div>
-                      <div className="text-sm text-purple-600">Running</div>
-                    </div>
-                    <div className="text-center p-3 bg-white rounded-lg">
-                      <div className="text-lg font-semibold text-purple-700">
-                        {Math.round(analysisResult.totalNutrition.calories / 8)} min
+                      <div className="text-center p-3 bg-white rounded-lg">
+                        <div className="text-lg font-semibold text-purple-700">
+                          {Math.round(
+                            analysisResult.totalNutrition.calories / 8
+                          )}{" "}
+                          min
+                        </div>
+                        <div className="text-sm text-purple-600">Cycling</div>
                       </div>
-                      <div className="text-sm text-purple-600">Cycling</div>
-                    </div>
-                    <div className="text-center p-3 bg-white rounded-lg">
-                      <div className="text-lg font-semibold text-purple-700">
-                        {Math.round(analysisResult.totalNutrition.calories / 6)} min
+                      <div className="text-center p-3 bg-white rounded-lg">
+                        <div className="text-lg font-semibold text-purple-700">
+                          {Math.round(
+                            analysisResult.totalNutrition.calories / 6
+                          )}{" "}
+                          min
+                        </div>
+                        <div className="text-sm text-purple-600">Walking</div>
                       </div>
-                      <div className="text-sm text-purple-600">Walking</div>
-                    </div>
-                    <div className="text-center p-3 bg-white rounded-lg">
-                      <div className="text-lg font-semibold text-purple-700">
-                        {Math.round(analysisResult.totalNutrition.calories / 12)} min
+                      <div className="text-center p-3 bg-white rounded-lg">
+                        <div className="text-lg font-semibold text-purple-700">
+                          {Math.round(
+                            analysisResult.totalNutrition.calories / 12
+                          )}{" "}
+                          min
+                        </div>
+                        <div className="text-sm text-purple-600">Swimming</div>
                       </div>
-                      <div className="text-sm text-purple-600">Swimming</div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                  </CardContent>
+                </Card>
+              )}
           </div>
         )}
       </CardContent>

@@ -16,20 +16,19 @@ interface Hero115Props {
   imageAlt?: string;
 }
 
-export function HeroSection(
-  {
+export function HeroSection({
   icon = <UtensilsCrossed className="size-6" />,
   heading = "Track your calories; it's now simpler than ever",
   description = "Just take a photo, and let our app do the work for you.",
   button = {
     text: "Get healthy",
     icon: <ArrowUpRight className="ml-2 size-4" />,
-    url: "/login",
+    url: "/dashboard",
   },
   trustText = "Trusted by 25.000+ Businesses Worldwide",
   imageSrc = "https://i.pinimg.com/736x/a5/90/3c/a5903ca92975289f5c043f2a1538bdfd.jpg",
-  imageAlt = "placeholder",}
-) {
+  imageAlt = "placeholder",
+}) {
   return (
     <section className="overflow-hidden pt-16 pb-32">
       <div className="container">
