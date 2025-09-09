@@ -24,7 +24,7 @@ export function HeroSection(
   button = {
     text: "Get healthy",
     icon: <ArrowUpRight className="ml-2 size-4" />,
-    url: "/auth/login?returnTo=/dashboard",
+    url: "/login",
   },
   trustText = "Trusted by 25.000+ Businesses Worldwide",
   imageSrc = "https://i.pinimg.com/736x/a5/90/3c/a5903ca92975289f5c043f2a1538bdfd.jpg",

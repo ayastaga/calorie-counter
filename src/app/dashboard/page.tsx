@@ -1,20 +1,26 @@
-import { auth0 } from "@/lib/auth0";
-import {redirect} from 'next/navigation'
+import { createClient } from "@/utils/supabase/server";
+import { redirect } from 'next/navigation';
 import { Shell } from "@/components/shell";
 import ImageUploadAnalysisCard from "../components/image-upload-analysis";
-import Link from 'next/link';
 
 export default async function Home() {
-  const session = await auth0.getSession();
+  const supabase = await createClient();
+  const { data: { user }, error } = await supabase.auth.getUser();
 
-  if (!session) {
-    redirect('/auth/login')
+  if (error || !user) {
+    redirect('/login');
   }
 
+  // Get user display name (could be from user metadata or email)
+  const displayName = user.user_metadata?.full_name || 
+                     user.user_metadata?.name || 
+                     user.email?.split('@')[0] || 
+                     'User';
+
   return (
-      <Shell className="max-w-2xl">
-        <h1>Welcome, {session.user.name}</h1>
-        <ImageUploadAnalysisCard/>
-      </Shell>
+    <Shell className="max-w-2xl">
+      <h1>Welcome, {displayName}!</h1>
+      <ImageUploadAnalysisCard />
+    </Shell>
   );
 }
