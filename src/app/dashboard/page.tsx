@@ -15,8 +15,9 @@ export default async function Home() {
   }
 
   // Get user display name (could be from user metadata or email)
-  const displayName =
-    user.user_metadata?.full_name ||
+  const displayName = 
+    user.user_metadata?.first_name ||
+    user.user_metadata?.last_name ||
     user.user_metadata?.name ||
     user.email?.split("@")[0] ||
     "User";

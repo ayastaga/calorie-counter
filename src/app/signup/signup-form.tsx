@@ -15,7 +15,7 @@ export default function SignupForm({
   const [state, action] = useActionState(signup, null);
 
   return (
-    <form className={cn("flex flex-col gap-6", className)} {...props}>
+    <form className={cn("flex flex-col gap-6", className)} action={action} {...props}>
       <div className="flex flex-col items-center gap-2 text-center">
         <h1 className="text-2xl font-bold">Create an account</h1>
         <p className="text-muted-foreground text-sm text-balance">
@@ -37,11 +37,31 @@ export default function SignupForm({
 
       <div className="grid gap-6">
         <div className="grid gap-3">
+          <Label htmlFor="firstName">First Name</Label>
+          <Input
+            id="firstName"
+            type="text"
+            placeholder="Enter your first name"
+            name="firstName"
+            required
+          />
+        </div>
+        <div className="grid gap-3">
+          <Label htmlFor="lastName">Last Name</Label>
+          <Input
+            id="lastName"
+            type="text"
+            placeholder="Enter your last name"
+            name="lastName"
+            required
+          />
+        </div>
+        <div className="grid gap-3">
           <Label htmlFor="email">Email</Label>
           <Input
             id="email"
             type="email"
-            placeholder="m@example.com"
+            placeholder="johndoe@example.com"
             name="email"
             required
           />
@@ -66,7 +86,7 @@ export default function SignupForm({
             required
           />
         </div>
-        <Button formAction={action} className="w-full">
+        <Button type="submit" className="w-full">
           Create Account
         </Button>
       </div>

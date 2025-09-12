@@ -475,6 +475,9 @@ export default function ImageUploadAnalysisCard() {
                     </div>
                   </div>
                 </CardContent>
+                <Button className="justify-items-center w-90">
+                  Add to profile
+                </Button>
               </Card>
             )}
 
