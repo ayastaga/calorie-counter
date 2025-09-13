@@ -21,6 +21,7 @@ const AuthenticatedNav = () => {
       >
         Profile
       </Link>
+      <Link className="hover:bg-black hover:text-white px-2 py-1 rounded-md transition-colors" href="/feedback">Feedback</Link>
       <form action="/auth/logout" method="post">
         <Button
           type="submit"
@@ -85,8 +86,13 @@ export async function SiteHeader() {
           </span>
         </Link>
         <nav className="flex flex-1 items-center md:justify-end">
+
+        </nav>
+        {/* 
+        <nav className="flex flex-1 items-center md:justify-end">
           <ModeToggle />
         </nav>
+        */}
         <CustomComponent />
       </div>
     </header>

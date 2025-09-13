@@ -24,19 +24,19 @@ const FeatureSection = ({
     {
       title: "Quality",
       description:
-        "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Saepe est aliquid exercitationem, quos explicabo repellat?",
+        "We provide you with the quality you not only need but deserve; our program uses the latest technologies and algorithsm to not only accurately calculate the number of calories, but also provide suggestions on how to burn them off ",
       icon: <GitPullRequest className="size-6" />,
     },
     {
       title: "Experience",
       description:
-        "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Saepe est aliquid exercitationem, quos explicabo repellat?",
+        "Behind this project is a team; a team with years of experience in nutrition and personal fitness so you can rest assured that your experience with us will be seamless.",
       icon: <SquareKanban className="size-6" />,
     },
     {
       title: "Support",
       description:
-        "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Saepe est aliquid exercitationem, quos explicabo repellat?",
+        "We proide you with the support you need; whether it is through the analytics and statistics behind through the app, or our team through our feedback system, which is quickly able to give you the assistance you need.",
       icon: <RadioTower className="size-6" />,
     },
   ],

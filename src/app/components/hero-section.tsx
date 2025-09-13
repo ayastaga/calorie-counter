@@ -1,3 +1,5 @@
+'use client';
+
 import { Wifi, Zap } from "lucide-react";
 import { ArrowUpRight, UtensilsCrossed } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,10 +27,12 @@ export function HeroSection({
     icon: <ArrowUpRight className="ml-2 size-4" />,
     url: "/dashboard",
   },
-  trustText = "Trusted by 25.000+ Businesses Worldwide",
+  trustText = "Trusted by 500+ Customers Worldwide",
   imageSrc = "https://i.pinimg.com/736x/a5/90/3c/a5903ca92975289f5c043f2a1538bdfd.jpg",
   imageAlt = "placeholder",
 }) {
+
+
   return (
     <section className="overflow-hidden pt-16 pb-32">
       <div className="container">

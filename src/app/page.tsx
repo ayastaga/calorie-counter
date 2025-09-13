@@ -1,11 +1,13 @@
-import { HeroSection } from "./components/hero-section"
-import { FeatureSection } from "./components/feature-section"
+import { HeroSection } from "./components/hero-section";
+import { FeatureSection } from "./components/feature-section";
+import Footer from "./components/footer";
 
 export default function IndexPage() {
   return (
     <div>
-      <HeroSection/>
-      <FeatureSection/>
+      <HeroSection />
+      <FeatureSection />
+      <Footer />
     </div>
-  )
+  );
 }
