@@ -1,10 +1,6 @@
 // /src/app/api/analyze-image/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { UTApi } from "uploadthing/server";
-
-// Initialize UTApi for file deletion
-const utapi = new UTApi();
 
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
@@ -50,6 +46,7 @@ interface AnalysisResult {
     fiber: number;
     sodium: number;
   };
+  uploadedImages?: ImageData[];
 }
 
 async function fetchImageAsBase64(url: string): Promise<string> {
@@ -58,54 +55,64 @@ async function fetchImageAsBase64(url: string): Promise<string> {
     if (!response.ok) {
       throw new Error(`Failed to fetch image: ${response.statusText}`);
     }
-    
+
     const buffer = await response.arrayBuffer();
-    const base64 = Buffer.from(buffer).toString('base64');
+    const base64 = Buffer.from(buffer).toString("base64");
     return base64;
   } catch (error) {
-    console.error('Error fetching image:', error);
+    console.error("Error fetching image:", error);
     throw error;
   }
 }
 
-async function getNutritionData(dishName: string): Promise<NutritionData | null> {
+async function getNutritionData(
+  dishName: string
+): Promise<NutritionData | null> {
   try {
     if (!process.env.NUTRITIONIX_APP_ID || !process.env.NUTRITIONIX_API_KEY) {
-      console.warn('Nutritionix API credentials not configured');
+      console.warn("Nutritionix API credentials not configured");
       return null;
     }
 
-    const response = await fetch('https://trackapi.nutritionix.com/v2/natural/nutrients', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-app-id': process.env.NUTRITIONIX_APP_ID,
-        'x-app-key': process.env.NUTRITIONIX_API_KEY,
-      },
-      body: JSON.stringify({
-        query: dishName,
-      }),
-    });
+    const response = await fetch(
+      "https://trackapi.nutritionix.com/v2/natural/nutrients",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-app-id": process.env.NUTRITIONIX_APP_ID,
+          "x-app-key": process.env.NUTRITIONIX_API_KEY,
+        },
+        body: JSON.stringify({
+          query: dishName,
+        }),
+      }
+    );
 
     if (!response.ok) {
-      console.error(`Nutritionix API error: ${response.status} ${response.statusText}`);
+      console.error(
+        `Nutritionix API error: ${response.status} ${response.statusText}`
+      );
       return null;
     }
 
     const data = await response.json();
-    
+
     if (data.foods && data.foods.length > 0) {
       return data.foods[0];
     }
-    
+
     return null;
   } catch (error) {
-    console.error('Error fetching nutrition data:', error);
+    console.error("Error fetching nutrition data:", error);
     return null;
   }
 }
 
-async function analyzeImageWithGemini(imageBase64: string, mimeType: string): Promise<AnalysisResult> {
+async function analyzeImageWithGemini(
+  imageBase64: string,
+  mimeType: string
+): Promise<AnalysisResult> {
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
@@ -134,8 +141,8 @@ async function analyzeImageWithGemini(imageBase64: string, mimeType: string): Pr
     const imagePart = {
       inlineData: {
         data: imageBase64,
-        mimeType: mimeType
-      }
+        mimeType: mimeType,
+      },
     };
 
     const result = await model.generateContent([prompt, imagePart]);
@@ -145,16 +152,19 @@ async function analyzeImageWithGemini(imageBase64: string, mimeType: string): Pr
     // Try to parse JSON response
     try {
       // Clean up the response text (remove markdown code blocks if present)
-      const cleanText = text.replace(/```json\n?|\n?```/g, '').trim();
+      const cleanText = text.replace(/```json\n?|\n?```/g, "").trim();
       const analysisResult = JSON.parse(cleanText);
-      
+
       // Ensure confidence is a number between 0 and 1
-      if (typeof analysisResult.confidence === 'number') {
-        analysisResult.confidence = Math.min(1, Math.max(0, analysisResult.confidence));
+      if (typeof analysisResult.confidence === "number") {
+        analysisResult.confidence = Math.min(
+          1,
+          Math.max(0, analysisResult.confidence)
+        );
       } else {
         analysisResult.confidence = 0.8; // Default confidence
       }
-      
+
       // Get nutrition data for each dish
       if (analysisResult.dishes && Array.isArray(analysisResult.dishes)) {
         const dishesWithNutrition = await Promise.all(
@@ -163,33 +173,37 @@ async function analyzeImageWithGemini(imageBase64: string, mimeType: string): Pr
             return {
               ...dish,
               nutrition: nutrition || undefined,
-              error: nutrition ? undefined : 'Nutrition data not found'
+              error: nutrition ? undefined : "Nutrition data not found",
             };
           })
         );
-        
+
         analysisResult.dishes = dishesWithNutrition;
-        
+
         // Calculate total nutrition
-        const totalNutrition = dishesWithNutrition.reduce((total, dish) => {
-          if (dish.nutrition) {
-            return {
-              calories: total.calories + (dish.nutrition.nf_calories || 0),
-              protein: total.protein + (dish.nutrition.nf_protein || 0),
-              carbs: total.carbs + (dish.nutrition.nf_total_carbohydrate || 0),
-              fat: total.fat + (dish.nutrition.nf_total_fat || 0),
-              fiber: total.fiber + (dish.nutrition.nf_dietary_fiber || 0),
-              sodium: total.sodium + (dish.nutrition.nf_sodium || 0),
-            };
-          }
-          return total;
-        }, { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sodium: 0 });
-        
+        const totalNutrition = dishesWithNutrition.reduce(
+          (total, dish) => {
+            if (dish.nutrition) {
+              return {
+                calories: total.calories + (dish.nutrition.nf_calories || 0),
+                protein: total.protein + (dish.nutrition.nf_protein || 0),
+                carbs:
+                  total.carbs + (dish.nutrition.nf_total_carbohydrate || 0),
+                fat: total.fat + (dish.nutrition.nf_total_fat || 0),
+                fiber: total.fiber + (dish.nutrition.nf_dietary_fiber || 0),
+                sodium: total.sodium + (dish.nutrition.nf_sodium || 0),
+              };
+            }
+            return total;
+          },
+          { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sodium: 0 }
+        );
+
         if (totalNutrition.calories > 0) {
           analysisResult.totalNutrition = totalNutrition;
         }
       }
-      
+
       return analysisResult;
     } catch (parseError) {
       // If JSON parsing fails, return a structured response from the text
@@ -201,36 +215,26 @@ async function analyzeImageWithGemini(imageBase64: string, mimeType: string): Pr
       };
     }
   } catch (error) {
-    console.error('Error analyzing image with Gemini:', error);
-    throw new Error('Failed to analyze image');
-  }
-}
-
-async function deleteUploadThingFile(key: string): Promise<void> {
-  try {
-    await utapi.deleteFiles([key]);
-    console.log(`Successfully deleted file with key: ${key}`);
-  } catch (error) {
-    console.error(`Failed to delete file with key ${key}:`, error);
-    // Don't throw error here to avoid blocking the response
+    console.error("Error analyzing image with Gemini:", error);
+    throw new Error("Failed to analyze image");
   }
 }
 
 function getMimeTypeFromUrl(url: string): string {
-  const extension = url.split('.').pop()?.toLowerCase();
-  
+  const extension = url.split(".").pop()?.toLowerCase();
+
   switch (extension) {
-    case 'jpg':
-    case 'jpeg':
-      return 'image/jpeg';
-    case 'png':
-      return 'image/png';
-    case 'webp':
-      return 'image/webp';
-    case 'gif':
-      return 'image/gif';
+    case "jpg":
+    case "jpeg":
+      return "image/jpeg";
+    case "png":
+      return "image/png";
+    case "webp":
+      return "image/webp";
+    case "gif":
+      return "image/gif";
     default:
-      return 'image/jpeg'; // Default fallback
+      return "image/jpeg"; // Default fallback
   }
 }
 
@@ -239,7 +243,7 @@ export async function POST(request: NextRequest) {
     // Check if Gemini API key is configured
     if (!process.env.GEMINI_API_KEY) {
       return NextResponse.json(
-        { error: 'Gemini API key not configured' },
+        { error: "Gemini API key not configured" },
         { status: 500 }
       );
     }
@@ -249,52 +253,53 @@ export async function POST(request: NextRequest) {
 
     if (!images || !Array.isArray(images) || images.length === 0) {
       return NextResponse.json(
-        { error: 'No images provided' },
+        { error: "No images provided" },
         { status: 400 }
       );
     }
 
     // For now, analyze only the first image (you can modify this to handle multiple images)
     const firstImage = images[0];
-    
+
     if (!firstImage) {
       return NextResponse.json(
-        { error: 'First image is undefined' },
+        { error: "First image is undefined" },
         { status: 400 }
       );
     }
-    
+
     try {
       // Fetch the image as base64
       const imageBase64 = await fetchImageAsBase64(firstImage.url);
       const mimeType = getMimeTypeFromUrl(firstImage.url);
-      
+
       // Analyze the image with Gemini
-      const analysisResult = await analyzeImageWithGemini(imageBase64, mimeType);
-      
-      // Delete all uploaded files from UploadThing (cleanup)
-      const deletePromises = images.map(image => deleteUploadThingFile(image.key));
-      await Promise.allSettled(deletePromises); // Use allSettled to continue even if some deletions fail
-      
+      const analysisResult = await analyzeImageWithGemini(
+        imageBase64,
+        mimeType
+      );
+
+      // Add uploaded images info to the result (don't delete them yet)
+      analysisResult.uploadedImages = images;
+
+      // DON'T delete the files - let them persist until user saves to profile or starts new analysis
+      console.log(
+        "Analysis complete. Images preserved for potential saving to profile."
+      );
+
       return NextResponse.json(analysisResult);
-      
     } catch (analysisError) {
-      console.error('Analysis error:', analysisError);
-      
-      // Still try to clean up files even if analysis failed
-      const deletePromises = images.map(image => deleteUploadThingFile(image.key));
-      await Promise.allSettled(deletePromises);
-      
+      console.error("Analysis error:", analysisError);
+
       return NextResponse.json(
-        { error: 'Failed to analyze image' },
+        { error: "Failed to analyze image" },
         { status: 500 }
       );
     }
-    
   } catch (error) {
-    console.error('API error:', error);
+    console.error("API error:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
@@ -302,7 +307,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   return NextResponse.json(
-    { message: 'Image analysis API is running. Use POST to analyze images.' },
+    { message: "Image analysis API is running. Use POST to analyze images." },
     { status: 200 }
   );
 }

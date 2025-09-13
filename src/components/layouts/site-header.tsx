@@ -17,7 +17,7 @@ const AuthenticatedNav = () => {
       </Link>
       <Link
         className="hover:bg-black hover:text-white px-2 py-1 rounded-md transition-colors"
-        href="/account"
+        href="/profile"
       >
         Profile
       </Link>

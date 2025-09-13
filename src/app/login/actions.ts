@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
+import { toast } from "sonner";
 
 export async function login(_prevState: any, formData: FormData) {
   const supabase = await createClient();
@@ -96,8 +97,8 @@ export async function signup(prevState: any, formData: FormData) {
     console.error("Signup error:", error);
     return { error: error.message };
   }
-
-  return { success: "Please check your email to confirm your account" };
+  
+  redirect('/login?toast=signup-success');
 }
 
 export async function signInWithGoogle(_prevState: any, _formData: FormData) {

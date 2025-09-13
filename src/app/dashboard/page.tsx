@@ -2,6 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import { Shell } from "@/components/shell";
 import ImageUploadAnalysisCard from "../components/image-upload-analysis";
+import { UtensilsCrossed } from "lucide-react";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -25,7 +26,10 @@ export default async function Home() {
   return (
     <Shell className="max-w-2xl">
       {/* custom animation here perhaps */}
-      <h1 className="text-center text-3xl">Welcome, {displayName}!</h1>
+      <div className="inline text-center mt-8 text-5xl">
+        <UtensilsCrossed className="size-10 flex inline flex-1"/>
+        <h1>Welcome, <div className="inline text-green-700">{displayName}</div></h1>
+      </div>
       <ImageUploadAnalysisCard />
     </Shell>
   );

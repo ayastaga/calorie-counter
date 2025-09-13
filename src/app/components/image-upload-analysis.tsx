@@ -37,6 +37,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import Image from "next/image";
 import { toast } from "sonner";
 import { UploadThingError } from "uploadthing/server";
+import { AddToProfileDialog } from "./add-to-profile-dialog";
 
 interface NutritionData {
   food_name: string;
@@ -408,6 +409,7 @@ export default function ImageUploadAnalysisCard() {
                 <Utensils className="h-5 w-5" />
                 Analysis Results
               </h3>
+              {/* 
               <Button
                 variant="ghost"
                 size="sm"
@@ -416,6 +418,7 @@ export default function ImageUploadAnalysisCard() {
               >
                 <X className="h-4 w-4" />
               </Button>
+              */}
             </div>
 
             {/* Total Nutrition Summary */}
@@ -475,11 +478,15 @@ export default function ImageUploadAnalysisCard() {
                     </div>
                   </div>
                 </CardContent>
-                <Button className="justify-items-center w-90">
-                  Add to profile
-                </Button>
               </Card>
             )}
+            
+            <div className="flex flex-col gap-6 rounded-xl bg-card py-2">
+              <AddToProfileDialog 
+                analysisResult={analysisResult}
+                onSave={clearResults}
+              />
+            </div>
 
             {/* Image Description */}
             <Card>
@@ -501,7 +508,7 @@ export default function ImageUploadAnalysisCard() {
               <div className="space-y-4">
                 <h4 className="text-lg font-semibold">Individual Dishes</h4>
                 {analysisResult.dishes.map((dish, index) => (
-                  <Card key={index} className="border-l-4 border-l-blue-500">
+                  <Card key={index} className="border-l-4 border-l-green-700">
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base capitalize">

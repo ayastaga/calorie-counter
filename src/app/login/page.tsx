@@ -1,7 +1,23 @@
+'use client';
+
 import { GalleryVerticalEnd } from "lucide-react";
 import { LoginForm } from "./login-form";
+import { useSearchParams } from "next/navigation";
+import { useEffect } from "react";
+import { toast } from "sonner";
 
 export default function LoginPage() {
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const toastParam = searchParams.get('toast')
+    if (toastParam === 'signup-success') {
+      toast.success('Sign up successful!', {
+        description: "Please check your email to confirm"
+      });
+    }
+  }, [searchParams])
+
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
       <div className="flex flex-col gap-4 p-6 md:p-10">
