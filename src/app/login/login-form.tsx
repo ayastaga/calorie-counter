@@ -80,6 +80,7 @@ export function LoginForm({
           </svg>
           Login with Google
         </Button>
+        {/* 
         <Button
           formAction={facebookAction}
           variant="outline"
@@ -90,6 +91,7 @@ export function LoginForm({
           </svg>
           Login with Facebook
         </Button>
+        */}
       </div>
       <div className="text-center text-sm">
         Don&apos;t have an account?{" "}
