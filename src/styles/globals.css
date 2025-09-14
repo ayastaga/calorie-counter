@@ -162,7 +162,6 @@
   }
 }
 
-
-.toaster .toast-description {
-  color: var(--toast-description-color);
+:root {
+  --toast-description: hsl(0, 0%, 20%); /* Your desired color */
 }
