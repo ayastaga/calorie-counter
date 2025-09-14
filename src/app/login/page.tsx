@@ -48,7 +48,9 @@ function LoginPageComponent() {
 }
 
 export default function LoginPage() {
-  <Suspense fallback={<div>Loading...</div>}>
-    <LoginPageComponent />
-  </Suspense>;
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginPageComponent />
+    </Suspense>
+  );
 }

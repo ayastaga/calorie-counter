@@ -9,7 +9,7 @@ export const siteConfig = {
     env.NEXT_PUBLIC_SITE_URL ||
     (env.NODE_ENV === "development"
       ? "http://localhost:3000"
-      : "https://sylphia-calorie-counter.vercel.app/"),
+      : "https://sylphia-calorie-counter.vercel.app"),
   links: {
     github: "https://github.com/ayastaga",
     docs: "https://diceui.com/docs/components/",
