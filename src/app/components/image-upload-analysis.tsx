@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@radix-ui/react-collapsible";
 import {
   FileUpload,
   FileUploadDropzone,
@@ -32,6 +33,8 @@ import {
   Trash2,
   Utensils,
   Activity,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Image from "next/image";
@@ -62,13 +65,28 @@ interface Dish {
   error?: string;
 }
 
-interface AnalysisResult {
+interface ImageAnalysis {
+  imageUrl: string;
+  imageName: string;
+  imageKey: string;
   description: string;
   confidence: number;
   objects?: string[];
   text?: string;
   dishes?: Dish[];
   totalNutrition?: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    fiber: number;
+    sodium: number;
+  };
+}
+
+interface AnalysisResult {
+  images: ImageAnalysis[];
+  overallTotalNutrition?: {
     calories: number;
     protein: number;
     carbs: number;
@@ -88,6 +106,7 @@ export default function ImageUploadAnalysisCard() {
   );
   const [error, setError] = useState<string | null>(null);
   const [deletingFiles, setDeletingFiles] = useState<Set<string>>(new Set());
+  const [expandedImages, setExpandedImages] = useState<Set<string>>(new Set());
 
   const onUpload = useCallback(
     async (
@@ -228,17 +247,14 @@ export default function ImageUploadAnalysisCard() {
 
       const result = await response.json();
       setAnalysisResult(result);
+      
+      // Expand the first image by default
+      if (result.images && result.images.length > 0) {
+        setExpandedImages(new Set([result.images[0].imageKey]));
+      }
+      
       setUploadedFiles([]);
       setFiles([]);
-
-      // Debug info in browser console
-      if (result.debug) {
-        console.log("=== NUTRITION DEBUG INFO ===");
-        console.log("Dishes processed:", result.debug.dishesProcessed);
-        console.log("Dishes with nutrition:", result.debug.dishesWithNutrition);
-        console.log("Nutritionix queries:", result.debug.nutritionixQueries);
-        console.log("=== END DEBUG ===");
-      }
 
       toast.success("Analysis complete!", {
         description: "Your images have been analyzed and cleaned up.",
@@ -257,6 +273,19 @@ export default function ImageUploadAnalysisCard() {
   const clearResults = () => {
     setAnalysisResult(null);
     setError(null);
+    setExpandedImages(new Set());
+  };
+
+  const toggleImageExpanded = (imageKey: string) => {
+    setExpandedImages((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(imageKey)) {
+        newSet.delete(imageKey);
+      } else {
+        newSet.add(imageKey);
+      }
+      return newSet;
+    });
   };
 
   const formatNutrientValue = (value: number, unit: string = "g") => {
@@ -351,7 +380,7 @@ export default function ImageUploadAnalysisCard() {
         {uploadedFiles.length > 0 && (
           <div className="flex flex-col gap-4">
             <p className="font-medium text-sm">
-              Uploaded files ready for analysis
+              Uploaded files ready for analysis ({uploadedFiles.length})
             </p>
             <div className="flex items-center gap-2 overflow-x-auto">
               {uploadedFiles.map((file) => (
@@ -391,12 +420,12 @@ export default function ImageUploadAnalysisCard() {
             {isAnalyzing ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Analyzing Images & Getting Nutrition Data...
+                Analyzing {uploadedFiles.length} Image{uploadedFiles.length > 1 ? 's' : ''} & Getting Nutrition Data...
               </>
             ) : (
               <>
                 <Eye className="mr-2 h-4 w-4" />
-                Analyze Food & Get Nutrition Info
+                Analyze {uploadedFiles.length} Image{uploadedFiles.length > 1 ? 's' : ''} & Get Nutrition Info
               </>
             )}
           </Button>
@@ -407,265 +436,328 @@ export default function ImageUploadAnalysisCard() {
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-semibold text-foreground flex items-center gap-2">
                 <Utensils className="h-5 w-5" />
-                Analysis Results
+                Analysis Results ({analysisResult.images.length} Image{analysisResult.images.length > 1 ? 's' : ''})
               </h3>
-              {/* 
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearResults}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-              */}
             </div>
 
-            {/* Total Nutrition Summary */}
-            {analysisResult.totalNutrition && (
+            {/* Overall Total Nutrition Summary */}
+            {analysisResult.overallTotalNutrition && (
               <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg text-green-800">
-                    Total Nutritional Information
+                    Combined Nutritional Information
                   </CardTitle>
+                  <CardDescription className="text-green-600">
+                    Total nutrition from all {analysisResult.images.length} images
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div className="text-center">
                       <div className="text-2xl font-bold text-green-700">
-                        {Math.round(analysisResult.totalNutrition.calories)}
+                        {Math.round(analysisResult.overallTotalNutrition.calories)}
                       </div>
-                      <div className="text-sm text-green-600">Calories</div>
+                      <div className="text-sm text-green-600">Total Calories</div>
                     </div>
                     <div className="text-center">
                       <div className="text-xl font-semibold text-blue-700">
                         {formatNutrientValue(
-                          analysisResult.totalNutrition.protein
+                          analysisResult.overallTotalNutrition.protein
                         )}
                       </div>
-                      <div className="text-sm text-blue-600">Protein</div>
+                      <div className="text-sm text-blue-600">Total Protein</div>
                     </div>
                     <div className="text-center">
                       <div className="text-xl font-semibold text-orange-700">
                         {formatNutrientValue(
-                          analysisResult.totalNutrition.carbs
+                          analysisResult.overallTotalNutrition.carbs
                         )}
                       </div>
-                      <div className="text-sm text-orange-600">Carbs</div>
+                      <div className="text-sm text-orange-600">Total Carbs</div>
                     </div>
                     <div className="text-center">
                       <div className="text-xl font-semibold text-yellow-700">
-                        {formatNutrientValue(analysisResult.totalNutrition.fat)}
+                        {formatNutrientValue(analysisResult.overallTotalNutrition.fat)}
                       </div>
-                      <div className="text-sm text-yellow-600">Fat</div>
+                      <div className="text-sm text-yellow-600">Total Fat</div>
                     </div>
                     <div className="text-center">
                       <div className="text-xl font-semibold text-purple-700">
                         {formatNutrientValue(
-                          analysisResult.totalNutrition.fiber
+                          analysisResult.overallTotalNutrition.fiber
                         )}
                       </div>
-                      <div className="text-sm text-purple-600">Fiber</div>
+                      <div className="text-sm text-purple-600">Total Fiber</div>
                     </div>
                     <div className="text-center">
                       <div className="text-xl font-semibold text-red-700">
                         {formatNutrientValue(
-                          analysisResult.totalNutrition.sodium,
+                          analysisResult.overallTotalNutrition.sodium,
                           "mg"
                         )}
                       </div>
-                      <div className="text-sm text-red-600">Sodium</div>
+                      <div className="text-sm text-red-600">Total Sodium</div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             )}
-            
-            <div className="flex flex-col gap-6 rounded-xl bg-card py-2">
-              <AddToProfileDialog 
-                analysisResult={analysisResult}
-                onSave={clearResults}
-              />
+
+            {/* Individual Image Analysis */}
+            <div className="space-y-4">
+              <h4 className="text-lg font-semibold">Individual Image Analysis</h4>
+              {analysisResult.images.map((imageAnalysis, index) => (
+                <Card key={imageAnalysis.imageKey} className="overflow-hidden">
+                  <Collapsible 
+                    open={expandedImages.has(imageAnalysis.imageKey)}
+                    onOpenChange={() => toggleImageExpanded(imageAnalysis.imageKey)}
+                  >
+                    <CollapsibleTrigger asChild>
+                      <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="relative w-16 h-16 rounded-lg overflow-hidden">
+                              <Image
+                                src={imageAnalysis.imageUrl}
+                                alt={imageAnalysis.imageName}
+                                fill
+                                sizes="64px"
+                                className="object-cover"
+                              />
+                            </div>
+                            <div>
+                              <CardTitle className="text-base">
+                                Image {index + 1}: {imageAnalysis.imageName}
+                              </CardTitle>
+                              <CardDescription>
+                                {imageAnalysis.totalNutrition 
+                                  ? `${Math.round(imageAnalysis.totalNutrition.calories)} calories`
+                                  : 'Click to view details'
+                                }
+                              </CardDescription>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {imageAnalysis.totalNutrition && (
+                              <Badge variant="secondary">
+                                {Math.round(imageAnalysis.totalNutrition.calories)} cal
+                              </Badge>
+                            )}
+                            {expandedImages.has(imageAnalysis.imageKey) ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
+                          </div>
+                        </div>
+                      </CardHeader>
+                    </CollapsibleTrigger>
+                    
+                    <CollapsibleContent>
+                      <CardContent className="space-y-6">
+                        {/* Image-specific total nutrition */}
+                        {imageAnalysis.totalNutrition && (
+                          <Card className="bg-gradient-to-r mt-5 from-blue-50 to-purple-50 border-blue-200">
+                            <CardHeader className="pb-3">
+                              <CardTitle className="text-base text-blue-800">
+                                Image Nutritional Summary
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                <div className="text-center">
+                                  <div className="text-lg font-bold text-blue-700">
+                                    {Math.round(imageAnalysis.totalNutrition.calories)}
+                                  </div>
+                                  <div className="text-xs text-blue-600">Calories</div>
+                                </div>
+                                <div className="text-center">
+                                  <div className="text-sm font-semibold text-blue-700">
+                                    {formatNutrientValue(imageAnalysis.totalNutrition.protein)}
+                                  </div>
+                                  <div className="text-xs text-blue-600">Protein</div>
+                                </div>
+                                <div className="text-center">
+                                  <div className="text-sm font-semibold text-orange-700">
+                                    {formatNutrientValue(imageAnalysis.totalNutrition.carbs)}
+                                  </div>
+                                  <div className="text-xs text-orange-600">Carbs</div>
+                                </div>
+                                <div className="text-center">
+                                  <div className="text-sm font-semibold text-yellow-700">
+                                    {formatNutrientValue(imageAnalysis.totalNutrition.fat)}
+                                  </div>
+                                  <div className="text-xs text-yellow-600">Fat</div>
+                                </div>
+                                <div className="text-center">
+                                  <div className="text-sm font-semibold text-purple-700">
+                                    {formatNutrientValue(imageAnalysis.totalNutrition.fiber)}
+                                  </div>
+                                  <div className="text-xs text-purple-600">Fiber</div>
+                                </div>
+                                <div className="text-center">
+                                  <div className="text-sm font-semibold text-red-700">
+                                    {formatNutrientValue(imageAnalysis.totalNutrition.sodium, "mg")}
+                                  </div>
+                                  <div className="text-xs text-red-600">Sodium</div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )}
+
+                        {/* Add to Profile for this specific image */}
+                        <div className="flex flex-col gap-6 rounded-xl bg-card py-2">
+                          <AddToProfileDialog 
+                            analysisResult={{
+                              description: imageAnalysis.description,
+                              confidence: imageAnalysis.confidence,
+                              objects: imageAnalysis.objects,
+                              dishes: imageAnalysis.dishes,
+                              totalNutrition: imageAnalysis.totalNutrition,
+                              uploadedImages: [{
+                                url: imageAnalysis.imageUrl,
+                                key: imageAnalysis.imageKey,
+                                name: imageAnalysis.imageName
+                              }]
+                            }}
+                            onSave={() => {}}
+                            imageSpecific={true}
+                            imageName={imageAnalysis.imageName}
+                          />
+                        </div>
+
+                        {/* Image Description */}
+                        <Card>
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-base">Image Description</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-muted-foreground text-sm">
+                              {imageAnalysis.description}
+                            </p>
+                            <div className="mt-2 text-xs text-muted-foreground">
+                              Confidence: {Math.round(imageAnalysis.confidence * 100)}%
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Individual Dishes for this image */}
+                        {imageAnalysis.dishes && imageAnalysis.dishes.length > 0 && (
+                          <div className="space-y-3">
+                            <h5 className="text-base font-semibold">Dishes in This Image</h5>
+                            {imageAnalysis.dishes.map((dish, dishIndex) => (
+                              <Card key={dishIndex} className="border-l-4 border-l-blue-700">
+                                <CardHeader className="pb-2">
+                                  <div className="flex items-center justify-between">
+                                    <CardTitle className="text-sm capitalize">
+                                      {dish.name}
+                                    </CardTitle>
+                                    <Badge variant="outline" className="text-xs">{dish.servingSize}</Badge>
+                                  </div>
+                                </CardHeader>
+                                <CardContent>
+                                  {dish.nutrition ? (
+                                    <div className="space-y-2">
+                                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                        <div className="bg-green-50 p-2 rounded text-center">
+                                          <div className="text-sm font-semibold text-green-700">
+                                            {Math.round(dish.nutrition.nf_calories)}
+                                          </div>
+                                          <div className="text-xs text-green-600">
+                                            Calories
+                                          </div>
+                                        </div>
+                                        <div className="bg-blue-50 p-2 rounded text-center">
+                                          <div className="text-sm font-semibold text-blue-700">
+                                            {formatNutrientValue(dish.nutrition.nf_protein)}
+                                          </div>
+                                          <div className="text-xs text-blue-600">
+                                            Protein
+                                          </div>
+                                        </div>
+                                        <div className="bg-orange-50 p-2 rounded text-center">
+                                          <div className="text-sm font-semibold text-orange-700">
+                                            {formatNutrientValue(
+                                              dish.nutrition.nf_total_carbohydrate
+                                            )}
+                                          </div>
+                                          <div className="text-xs text-orange-600">
+                                            Carbs
+                                          </div>
+                                        </div>
+                                        <div className="bg-yellow-50 p-2 rounded text-center">
+                                          <div className="text-sm font-semibold text-yellow-700">
+                                            {formatNutrientValue(
+                                              dish.nutrition.nf_total_fat
+                                            )}
+                                          </div>
+                                          <div className="text-xs text-yellow-600">Fat</div>
+                                        </div>
+                                      </div>
+
+                                      <div className="text-xs text-muted-foreground">
+                                        Serving: {dish.nutrition.serving_qty}{" "}
+                                        {dish.nutrition.serving_unit} ({dish.nutrition.serving_weight_grams}g)
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <Alert className="border-amber-200 bg-amber-50">
+                                      <AlertDescription className="text-amber-800 text-sm">
+                                        {dish.error ||
+                                          "Nutrition data not available for this dish"}
+                                      </AlertDescription>
+                                    </Alert>
+                                  )}
+                                </CardContent>
+                              </Card>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Ingredients Found in this image */}
+                        {imageAnalysis.objects && imageAnalysis.objects.length > 0 && (
+                          <Card>
+                            <CardHeader className="pb-2">
+                              <CardTitle className="text-base">
+                                Ingredients Identified
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="flex flex-wrap gap-1">
+                                {imageAnalysis.objects.map((object, objIndex) => (
+                                  <Badge
+                                    key={objIndex}
+                                    variant="secondary"
+                                    className="text-xs"
+                                  >
+                                    {object}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )}
+                      </CardContent>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </Card>
+              ))}
             </div>
 
-            {/* Image Description */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Image Description</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  {analysisResult.description}
-                </p>
-                <div className="mt-2 text-sm text-muted-foreground">
-                  Confidence: {Math.round(analysisResult.confidence * 100)}%
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Individual Dishes */}
-            {analysisResult.dishes && analysisResult.dishes.length > 0 && (
-              <div className="space-y-4">
-                <h4 className="text-lg font-semibold">Individual Dishes</h4>
-                {analysisResult.dishes.map((dish, index) => (
-                  <Card key={index} className="border-l-4 border-l-green-700">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base capitalize">
-                          {dish.name}
-                        </CardTitle>
-                        <Badge variant="outline">{dish.servingSize}</Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      {dish.nutrition ? (
-                        <div className="space-y-3">
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            <div className="bg-green-50 p-3 rounded-lg text-center">
-                              <div className="text-lg font-semibold text-green-700">
-                                {Math.round(dish.nutrition.nf_calories)}
-                              </div>
-                              <div className="text-xs text-green-600">
-                                Calories
-                              </div>
-                            </div>
-                            <div className="bg-blue-50 p-3 rounded-lg text-center">
-                              <div className="text-sm font-semibold text-blue-700">
-                                {formatNutrientValue(dish.nutrition.nf_protein)}
-                              </div>
-                              <div className="text-xs text-blue-600">
-                                Protein
-                              </div>
-                            </div>
-                            <div className="bg-orange-50 p-3 rounded-lg text-center">
-                              <div className="text-sm font-semibold text-orange-700">
-                                {formatNutrientValue(
-                                  dish.nutrition.nf_total_carbohydrate
-                                )}
-                              </div>
-                              <div className="text-xs text-orange-600">
-                                Carbs
-                              </div>
-                            </div>
-                            <div className="bg-yellow-50 p-3 rounded-lg text-center">
-                              <div className="text-sm font-semibold text-yellow-700">
-                                {formatNutrientValue(
-                                  dish.nutrition.nf_total_fat
-                                )}
-                              </div>
-                              <div className="text-xs text-yellow-600">Fat</div>
-                            </div>
-                          </div>
-
-                          <Separator />
-
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                            <div>
-                              <span className="text-muted-foreground">
-                                Fiber:
-                              </span>
-                              <span className="ml-1 font-medium">
-                                {formatNutrientValue(
-                                  dish.nutrition.nf_dietary_fiber
-                                )}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">
-                                Sugar:
-                              </span>
-                              <span className="ml-1 font-medium">
-                                {formatNutrientValue(dish.nutrition.nf_sugars)}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">
-                                Sodium:
-                              </span>
-                              <span className="ml-1 font-medium">
-                                {formatNutrientValue(
-                                  dish.nutrition.nf_sodium,
-                                  "mg"
-                                )}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">
-                                Cholesterol:
-                              </span>
-                              <span className="ml-1 font-medium">
-                                {formatNutrientValue(
-                                  dish.nutrition.nf_cholesterol,
-                                  "mg"
-                                )}
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="text-xs text-muted-foreground">
-                            Serving: {dish.nutrition.serving_qty}{" "}
-                            {dish.nutrition.serving_unit}(
-                            {dish.nutrition.serving_weight_grams}g)
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          <Alert className="border-amber-200 bg-amber-50">
-                            <AlertDescription className="text-amber-800">
-                              {dish.error ||
-                                "Nutrition data not available for this dish"}
-                            </AlertDescription>
-                          </Alert>
-                          <div className="text-xs text-muted-foreground">
-                            Try searching for "{dish.name}" manually in
-                            nutrition apps like MyFitnessPal for detailed
-                            information.
-                          </div>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-
-            {/* Ingredients Found */}
-            {analysisResult.objects && analysisResult.objects.length > 0 && (
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">
-                    Ingredients Identified
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2">
-                    {analysisResult.objects.map((object, index) => (
-                      <Badge
-                        key={index}
-                        variant="secondary"
-                        className="text-xs"
-                      >
-                        {object}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Activity Suggestions */}
-            {analysisResult.totalNutrition &&
-              analysisResult.totalNutrition.calories > 0 && (
+            {/* Activity Suggestions based on overall total */}
+            {analysisResult.overallTotalNutrition &&
+              analysisResult.overallTotalNutrition.calories > 0 && (
                 <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-lg text-purple-800 flex items-center gap-2">
                       <Activity className="h-5 w-5" />
-                      Activity Suggestions to Burn Calories
+                      Activity Suggestions to Burn Total Calories
                     </CardTitle>
                     <CardDescription className="text-purple-600">
                       Approximate time needed to burn{" "}
-                      {Math.round(analysisResult.totalNutrition.calories)}{" "}
-                      calories
+                      {Math.round(analysisResult.overallTotalNutrition.calories)}{" "}
+                      calories from all images
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -673,7 +765,7 @@ export default function ImageUploadAnalysisCard() {
                       <div className="text-center p-3 bg-white rounded-lg">
                         <div className="text-lg font-semibold text-purple-700">
                           {Math.round(
-                            analysisResult.totalNutrition.calories / 10
+                            analysisResult.overallTotalNutrition.calories / 10
                           )}{" "}
                           min
                         </div>
@@ -682,7 +774,7 @@ export default function ImageUploadAnalysisCard() {
                       <div className="text-center p-3 bg-white rounded-lg">
                         <div className="text-lg font-semibold text-purple-700">
                           {Math.round(
-                            analysisResult.totalNutrition.calories / 8
+                            analysisResult.overallTotalNutrition.calories / 8
                           )}{" "}
                           min
                         </div>
@@ -691,7 +783,7 @@ export default function ImageUploadAnalysisCard() {
                       <div className="text-center p-3 bg-white rounded-lg">
                         <div className="text-lg font-semibold text-purple-700">
                           {Math.round(
-                            analysisResult.totalNutrition.calories / 6
+                            analysisResult.overallTotalNutrition.calories / 6
                           )}{" "}
                           min
                         </div>
@@ -700,7 +792,7 @@ export default function ImageUploadAnalysisCard() {
                       <div className="text-center p-3 bg-white rounded-lg">
                         <div className="text-lg font-semibold text-purple-700">
                           {Math.round(
-                            analysisResult.totalNutrition.calories / 12
+                            analysisResult.overallTotalNutrition.calories / 12
                           )}{" "}
                           min
                         </div>

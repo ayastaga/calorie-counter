@@ -33,6 +33,14 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   LineChart,
   Line,
   XAxis,
@@ -53,10 +61,14 @@ import {
   Target,
   Clock,
   Utensils,
+  Eye,
+  X,
+  ImageIcon,
 } from "lucide-react";
 import { format, subDays, isAfter, isBefore, isSameDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
+import Image from "next/image";
 
 interface NutritionSummary {
   date?: string;
@@ -100,6 +112,84 @@ const MEAL_TYPE_COLORS = {
   other: "bg-gray-100 text-gray-800",
 };
 
+// Image Modal Component
+interface ImageModalProps {
+  imageUrl: string;
+  mealName: string;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+function ImageModal({ imageUrl, mealName, isOpen, onClose }: ImageModalProps) {
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+        <DialogHeader>
+          <DialogTitle className="flex items-center justify-between">
+            <span>{mealName}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="h-6 w-6 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogTitle>
+        </DialogHeader>
+        <div className="relative w-full h-[70vh]">
+          <Image
+            src={imageUrl}
+            alt={mealName}
+            fill
+            className="object-contain rounded-lg"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
+          />
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Meal Card Component for Progress Tab
+interface MealCardProps {
+  meal: Meal;
+  onImageClick?: (imageUrl: string, mealName: string) => void;
+}
+
+function MealCard({ meal, onImageClick }: MealCardProps) {
+  return (
+    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors">
+      {meal.image_url && (
+        <div
+          className="relative w-12 h-12 rounded-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+          onClick={() => onImageClick?.(meal.image_url!, meal.meal_name)}
+        >
+          <Image
+            src={meal.image_url}
+            alt={meal.meal_name}
+            fill
+            className="object-cover"
+            sizes="48px"
+          />
+          <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors flex items-center justify-center">
+            <Eye className="h-3 w-3 text-white opacity-0 hover:opacity-100 transition-opacity" />
+          </div>
+        </div>
+      )}
+      <div className="flex-1">
+        <p className="font-medium text-sm">{meal.meal_name}</p>
+        <p className="text-xs text-muted-foreground">
+          {format(new Date(meal.logged_at), "MMM dd, HH:mm")} • {meal.meal_type}
+        </p>
+      </div>
+      <Badge variant="secondary" className="text-xs">
+        {Math.round(meal.total_calories)} cal
+      </Badge>
+    </div>
+  );
+}
+
 export default function ProfilePage() {
   const [period, setPeriod] = useState<
     "daily" | "weekly" | "monthly" | "yearly"
@@ -108,6 +198,10 @@ export default function ProfilePage() {
   const [meals, setMeals] = useState<Meal[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<{
+    url: string;
+    name: string;
+  } | null>(null);
 
   // Fixed date range state using proper DateRange type
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -167,15 +261,18 @@ export default function ProfilePage() {
   }, [period, dateRange]);
 
   const formatChartData = () => {
-    return summaryData.map((item) => ({
-      date: item.date || item.week_start || item.month_start || item.year_start,
-      calories: Number(item.total_calories),
-      protein: Number(item.total_protein),
-      carbs: Number(item.total_carbs),
-      fat: Number(item.total_fat),
-      fiber: Number(item.total_fiber),
-      sodium: Number(item.total_sodium) / 1000, // Convert to grams for better visualization
-    }));
+    return summaryData
+      .map((item) => ({
+        date:
+          item.date || item.week_start || item.month_start || item.year_start,
+        calories: Number(item.total_calories),
+        protein: Number(item.total_protein),
+        carbs: Number(item.total_carbs),
+        fat: Number(item.total_fat),
+        fiber: Number(item.total_fiber),
+        sodium: Number(item.total_sodium) / 1000, // Convert to grams for better visualization
+      }))
+      .reverse(); // Reverse to show latest dates on the right
   };
 
   const getTotalStats = () => {
@@ -208,6 +305,10 @@ export default function ProfilePage() {
     ].filter((item) => item.value > 0);
   };
 
+  const handleImageClick = (imageUrl: string, mealName: string) => {
+    setSelectedImage({ url: imageUrl, name: mealName });
+  };
+
   const stats = getTotalStats();
   const avgDailyCalories =
     stats.daysLogged > 0
@@ -225,6 +326,16 @@ export default function ProfilePage() {
           Track your nutritional intake and view progress over time
         </p>
       </div>
+
+      {/* Image Modal */}
+      {selectedImage && (
+        <ImageModal
+          imageUrl={selectedImage.url}
+          mealName={selectedImage.name}
+          isOpen={!!selectedImage}
+          onClose={() => setSelectedImage(null)}
+        />
+      )}
 
       {/* Controls */}
       <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -339,7 +450,7 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {stats.totalCalories.toLocaleString()}
+              {stats.totalCalories.toLocaleString()} kcals
             </div>
             <p className="text-sm text-muted-foreground">
               Avg: {avgDailyCalories}/day
@@ -356,7 +467,7 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
-              {stats.totalMeals}
+              {stats.totalMeals} meals
             </div>
             <p className="text-sm text-muted-foreground">
               Over {stats.daysLogged} days
@@ -391,7 +502,7 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-600">
-              {stats.daysLogged}
+              {stats.daysLogged} days
             </div>
             <p className="text-sm text-muted-foreground">Keep it up!</p>
           </CardContent>
@@ -566,26 +677,18 @@ export default function ProfilePage() {
                   <Utensils className="h-5 w-5" />
                   Recent Meals Summary
                 </CardTitle>
-                <CardDescription>Your latest food logs</CardDescription>
+                <CardDescription>
+                  Your latest food logs with images
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   {meals.slice(0, 5).map((meal) => (
-                    <div
+                    <MealCard
                       key={meal.id}
-                      className="flex items-center justify-between p-2 rounded-lg bg-muted/50"
-                    >
-                      <div>
-                        <p className="font-medium text-sm">{meal.meal_name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {format(new Date(meal.logged_at), "MMM dd, HH:mm")} •{" "}
-                          {meal.meal_type}
-                        </p>
-                      </div>
-                      <Badge variant="secondary" className="text-xs">
-                        {Math.round(meal.total_calories)} cal
-                      </Badge>
-                    </div>
+                      meal={meal}
+                      onImageClick={handleImageClick}
+                    />
                   ))}
                   {meals.length === 0 && (
                     <p className="text-sm text-muted-foreground text-center py-4">
@@ -615,6 +718,7 @@ export default function ProfilePage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead>Image</TableHead>
                         <TableHead>Date & Time</TableHead>
                         <TableHead>Meal Name</TableHead>
                         <TableHead>Type</TableHead>
@@ -628,6 +732,34 @@ export default function ProfilePage() {
                     <TableBody>
                       {meals.map((meal) => (
                         <TableRow key={meal.id}>
+                          <TableCell>
+                            {meal.image_url ? (
+                              <div
+                                className="relative w-10 h-10 rounded-md overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+                                onClick={() =>
+                                  handleImageClick(
+                                    meal.image_url!,
+                                    meal.meal_name
+                                  )
+                                }
+                              >
+                                <Image
+                                  src={meal.image_url}
+                                  alt={meal.meal_name}
+                                  fill
+                                  className="object-cover"
+                                  sizes="40px"
+                                />
+                                <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors flex items-center justify-center">
+                                  <Eye className="h-3 w-3 text-white opacity-0 hover:opacity-100 transition-opacity" />
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="w-10 h-10 rounded-md bg-muted flex items-center justify-center">
+                                <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                            )}
+                          </TableCell>
                           <TableCell className="font-medium">
                             <div className="text-sm">
                               <div>

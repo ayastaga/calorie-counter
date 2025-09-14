@@ -27,17 +27,22 @@ interface NutritionData {
   nf_protein: number;
 }
 
-interface AnalysisResult {
+interface Dish {
+  name: string;
+  servingSize: string;
+  nutrition?: NutritionData;
+  error?: string;
+}
+
+interface ImageAnalysis {
+  imageUrl: string;
+  imageName: string;
+  imageKey: string;
   description: string;
   confidence: number;
   objects?: string[];
   text?: string;
-  dishes?: Array<{
-    name: string;
-    servingSize: string;
-    nutrition?: NutritionData;
-    error?: string;
-  }>;
+  dishes?: Dish[];
   totalNutrition?: {
     calories: number;
     protein: number;
@@ -46,7 +51,18 @@ interface AnalysisResult {
     fiber: number;
     sodium: number;
   };
-  uploadedImages?: ImageData[];
+}
+
+interface AnalysisResult {
+  images: ImageAnalysis[];
+  overallTotalNutrition?: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    fiber: number;
+    sodium: number;
+  };
 }
 
 async function fetchImageAsBase64(url: string): Promise<string> {
@@ -111,8 +127,9 @@ async function getNutritionData(
 
 async function analyzeImageWithGemini(
   imageBase64: string,
-  mimeType: string
-): Promise<AnalysisResult> {
+  mimeType: string,
+  imageData: ImageData
+): Promise<ImageAnalysis> {
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
@@ -180,7 +197,7 @@ async function analyzeImageWithGemini(
 
         analysisResult.dishes = dishesWithNutrition;
 
-        // Calculate total nutrition
+        // Calculate total nutrition for this image
         const totalNutrition = dishesWithNutrition.reduce(
           (total, dish) => {
             if (dish.nutrition) {
@@ -204,10 +221,22 @@ async function analyzeImageWithGemini(
         }
       }
 
-      return analysisResult;
+      return {
+        imageUrl: imageData.url,
+        imageName: imageData.name,
+        imageKey: imageData.key,
+        description: analysisResult.description,
+        confidence: analysisResult.confidence,
+        objects: analysisResult.objects || [],
+        dishes: analysisResult.dishes || [],
+        totalNutrition: analysisResult.totalNutrition,
+      };
     } catch (parseError) {
       // If JSON parsing fails, return a structured response from the text
       return {
+        imageUrl: imageData.url,
+        imageName: imageData.name,
+        imageKey: imageData.key,
         description: text,
         confidence: 0.75,
         objects: [],
@@ -216,7 +245,7 @@ async function analyzeImageWithGemini(
     }
   } catch (error) {
     console.error("Error analyzing image with Gemini:", error);
-    throw new Error("Failed to analyze image");
+    throw new Error(`Failed to analyze image ${imageData.name}`);
   }
 }
 
@@ -258,41 +287,75 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // For now, analyze only the first image (you can modify this to handle multiple images)
-    const firstImage = images[0];
-
-    if (!firstImage) {
-      return NextResponse.json(
-        { error: "First image is undefined" },
-        { status: 400 }
-      );
-    }
+    console.log(`Starting analysis of ${images.length} images`);
 
     try {
-      // Fetch the image as base64
-      const imageBase64 = await fetchImageAsBase64(firstImage.url);
-      const mimeType = getMimeTypeFromUrl(firstImage.url);
+      // Analyze all images in parallel
+      const analysisPromises = images.map(async (imageData) => {
+        try {
+          // Fetch the image as base64
+          const imageBase64 = await fetchImageAsBase64(imageData.url);
+          const mimeType = getMimeTypeFromUrl(imageData.url);
 
-      // Analyze the image with Gemini
-      const analysisResult = await analyzeImageWithGemini(
-        imageBase64,
-        mimeType
+          // Analyze the image with Gemini
+          return await analyzeImageWithGemini(imageBase64, mimeType, imageData);
+        } catch (error) {
+          console.error(`Error analyzing image ${imageData.name}:`, error);
+          // Return a partial result for failed images
+          return {
+            imageUrl: imageData.url,
+            imageName: imageData.name,
+            imageKey: imageData.key,
+            description: `Failed to analyze image: ${
+              error instanceof Error ? error.message : "Unknown error"
+            }`,
+            confidence: 0,
+            objects: [],
+            dishes: [],
+          };
+        }
+      });
+
+      const imageAnalyses = await Promise.all(analysisPromises);
+
+      // Calculate overall total nutrition from all images
+      const overallTotalNutrition = imageAnalyses.reduce(
+        (overallTotal, imageAnalysis) => {
+          if (imageAnalysis.totalNutrition) {
+            return {
+              calories:
+                overallTotal.calories + imageAnalysis.totalNutrition.calories,
+              protein:
+                overallTotal.protein + imageAnalysis.totalNutrition.protein,
+              carbs: overallTotal.carbs + imageAnalysis.totalNutrition.carbs,
+              fat: overallTotal.fat + imageAnalysis.totalNutrition.fat,
+              fiber: overallTotal.fiber + imageAnalysis.totalNutrition.fiber,
+              sodium: overallTotal.sodium + imageAnalysis.totalNutrition.sodium,
+            };
+          }
+          return overallTotal;
+        },
+        { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sodium: 0 }
       );
 
-      // Add uploaded images info to the result (don't delete them yet)
-      analysisResult.uploadedImages = images;
+      const result: AnalysisResult = {
+        images: imageAnalyses,
+        overallTotalNutrition:
+          overallTotalNutrition.calories > 0
+            ? overallTotalNutrition
+            : undefined,
+      };
 
-      // DON'T delete the files - let them persist until user saves to profile or starts new analysis
       console.log(
-        "Analysis complete. Images preserved for potential saving to profile."
+        `Analysis complete for ${images.length} images. Total calories: ${overallTotalNutrition.calories}`
       );
 
-      return NextResponse.json(analysisResult);
+      return NextResponse.json(result);
     } catch (analysisError) {
       console.error("Analysis error:", analysisError);
 
       return NextResponse.json(
-        { error: "Failed to analyze image" },
+        { error: "Failed to analyze images" },
         { status: 500 }
       );
     }
