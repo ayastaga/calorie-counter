@@ -17,7 +17,7 @@ export default async function Home() {
   }
 
   // Get user display name (could be from user metadata or email)
-  const displayName = 
+  const displayName =
     user.user_metadata?.first_name ||
     user.user_metadata?.last_name ||
     user.user_metadata?.name ||
@@ -26,15 +26,17 @@ export default async function Home() {
 
   return (
     <>
-    <Shell className="max-w-2xl mb-6">
-      {/* custom animation here perhaps */}
-      <div className="inline text-center mt-5 text-5xl">
-        <UtensilsCrossed className="size-10 flex inline flex-1"/>
-        <h1>Welcome, <div className="inline text-green-700">{displayName}</div></h1>
-      </div>
-      <ImageUploadAnalysisCard />
-    </Shell>
-    <Footer/>
+      <Shell className="max-w-2xl mb-6">
+        {/* custom animation here perhaps */}
+        <div className="inline text-center mt-5 text-5xl">
+          <UtensilsCrossed className="size-10 flex inline flex-1" />
+          <h1>
+            Welcome, <div className="inline text-green-700">{displayName}</div>
+          </h1>
+        </div>
+        <ImageUploadAnalysisCard />
+      </Shell>
+      <Footer />
     </>
   );
 }
