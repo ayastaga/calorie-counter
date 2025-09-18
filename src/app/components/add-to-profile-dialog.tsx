@@ -53,6 +53,7 @@ interface AnalysisResult {
   description: string;
   confidence: number;
   objects?: string[];
+  allergens?: string[];
   text?: string;
   dishes?: Dish[];
   totalNutrition?: {
@@ -284,6 +285,28 @@ export function AddToProfileDialog({
               </div>
             </CardContent>
           </Card>
+
+          {/* Allergens Warning */}
+          {analysisResult.allergens && analysisResult.allergens.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-red-600">Allergen Warning</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-1">
+                  {analysisResult.allergens.map((object, objIndex) => (
+                    <Badge
+                      key={objIndex}
+                      variant="destructive"
+                      className="text-sm text-white"
+                    >
+                      {object}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Individual Dishes Preview */}
           {analysisResult.dishes && analysisResult.dishes.length > 0 && (

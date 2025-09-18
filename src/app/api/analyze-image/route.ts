@@ -41,6 +41,7 @@ interface ImageAnalysis {
   description: string;
   confidence: number;
   objects?: string[];
+  allergens?: string[];
   text?: string;
   dishes?: Dish[];
   totalNutrition?: {
@@ -138,7 +139,8 @@ async function analyzeImageWithGemini(
     1. A detailed description of what you see (keep it concise)
     2. List of specific dishes/food items with their approximate serving sizes (be specific about dish names for nutrition lookup)
     3. List of ingredients/objects you can identify
-    4. Your confidence level in the analysis
+    4. List of potential allegrens in the dish
+    5. Your confidence level in the analysis
     
     For dishes, use common, searchable names (e.g., "chicken breast grilled", "caesar salad", "chocolate chip cookie" rather than vague terms).
     
@@ -152,6 +154,7 @@ async function analyzeImageWithGemini(
         }
       ],
       "objects": ["ingredient1", "ingredient2", "ingredient3"],
+      "allergens": ["allergen1", "allergen2", "allergen3"],
       "confidence": 0.95
     }`;
 
@@ -228,6 +231,7 @@ async function analyzeImageWithGemini(
         description: analysisResult.description,
         confidence: analysisResult.confidence,
         objects: analysisResult.objects || [],
+        allergens: analysisResult.allergens || [],
         dishes: analysisResult.dishes || [],
         totalNutrition: analysisResult.totalNutrition,
       };
@@ -240,6 +244,7 @@ async function analyzeImageWithGemini(
         description: text,
         confidence: 0.75,
         objects: [],
+        allergens: [],
         dishes: [],
       };
     }

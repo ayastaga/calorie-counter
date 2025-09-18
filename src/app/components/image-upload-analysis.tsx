@@ -76,6 +76,7 @@ interface ImageAnalysis {
   description: string;
   confidence: number;
   objects?: string[];
+  allergens?: string[];
   text?: string;
   dishes?: Dish[];
   totalNutrition?: {
@@ -297,7 +298,7 @@ export default function ImageUploadAnalysisCard() {
   };
 
   return (
-    <Card className="w-full max-w-4xl mx-auto">
+    <Card className="w-full max-w-4xl mx-auto border-none">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Eye className="h-5 w-5" />
@@ -654,6 +655,33 @@ export default function ImageUploadAnalysisCard() {
                           </Card>
                         )}
 
+                        {/* Allergens Warning */}
+                        {imageAnalysis.allergens &&
+                          imageAnalysis.allergens.length > 0 && (
+                            <Card>
+                              <CardHeader>
+                                <CardTitle className="text-red-600">
+                                  Allergen Warning
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <div className="flex flex-wrap gap-1">
+                                  {imageAnalysis.allergens.map(
+                                    (object, objIndex) => (
+                                      <Badge
+                                        key={objIndex}
+                                        variant="destructive"
+                                        className="text-sm text-white"
+                                      >
+                                        {object}
+                                      </Badge>
+                                    )
+                                  )}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          )}
+
                         {/* Add to Profile for this specific image */}
                         <div className="flex flex-col gap-6 rounded-xl bg-card py-2">
                           <AddToProfileDialog
@@ -705,7 +733,7 @@ export default function ImageUploadAnalysisCard() {
                               {imageAnalysis.dishes.map((dish, dishIndex) => (
                                 <Card
                                   key={dishIndex}
-                                  className="border-l-4 border-l-blue-700"
+                                  className="border-l-4 border-l-white-400"
                                 >
                                   <CardHeader className="pb-2">
                                     <div className="flex items-center justify-between">
