@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
   Collapsible,
   CollapsibleContent,
@@ -509,7 +508,7 @@ export default function ImageUploadAnalysisCard() {
                       <div className="text-xl font-semibold text-red-700">
                         {formatNutrientValue(
                           analysisResult.overallTotalNutrition.sodium,
-                          "mg"
+                          " mg"
                         )}
                       </div>
                       <div className="text-sm text-red-600">Total Sodium</div>
