@@ -237,7 +237,7 @@ export default function ImageUploadAnalysisCard() {
         },
         body: JSON.stringify({
           images: uploadedFiles.map((file) => ({
-            url: file.url,
+            url: file.ufsUrl,
             key: file.key,
             name: file.name,
           })),
@@ -391,7 +391,7 @@ export default function ImageUploadAnalysisCard() {
                 <div key={file.key} className="relative group">
                   <div className="relative size-20 flex-shrink-0">
                     <Image
-                      src={file.url}
+                      src={file.ufsUrl}
                       alt={file.name}
                       fill
                       sizes="80px"

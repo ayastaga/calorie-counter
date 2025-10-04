@@ -9,17 +9,17 @@ export const ourFileRouter = {
     .middleware(async ({ req }) => {
       // This code runs on your server before upload
       console.log("UploadThing middleware running");
-      
+
       // Return any data you want to pass to onUploadComplete
       return { uploadedBy: "user" };
     })
     .onUploadComplete(async ({ metadata, file }) => {
       // This code RUNS ON YOUR SERVER after upload
       console.log("Upload complete for:", metadata.uploadedBy);
-      console.log("File URL:", file.url);
-      
+      console.log("File URL:", file.ufsUrl);
+
       // Return anything you want to send back to the client
-      return { uploadedBy: metadata.uploadedBy, url: file.url };
+      return { uploadedBy: metadata.uploadedBy, url: file.ufsUrl };
     }),
 } satisfies FileRouter;
 

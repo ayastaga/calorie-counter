@@ -132,7 +132,7 @@ async function analyzeImageWithGemini(
   imageData: ImageData
 ): Promise<ImageAnalysis> {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
     const prompt = `
     Analyze this food image in detail. Provide:
